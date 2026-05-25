@@ -1,34 +1,61 @@
 .config-menu {
-  display: inline-flex; /* shrink-wrap its contents */
+  display: inline-flex;
   flex-direction: column;
-  align-items: stretch; /* make children equal width */
+  align-items: stretch;
   gap: 0;
+  min-width: 360px;
   border: 2px solid black;
   margin: 0 auto;
+  background: #d9d9df;
+  box-shadow: 0 2px 0 #111;
 }
 
 .config-menu .toggle-btn {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-radius: 5px;
-  flex: 1 0 auto; /* do not shrink unevenly */
-  width: 100%; /* fill parent’s width */
+  gap: 12px;
+  flex: 1 0 auto;
+  width: 100%;
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 1px solid #777783;
+  border-radius: 0;
+  background: #e6e6ec;
+  color: #050505;
+  font: inherit;
+  text-align: left;
+}
+
+.config-menu .toggle-btn:hover:not(:disabled) {
+  background: #f2f2f7;
+}
+
+.config-menu .toggle-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
 }
 
 .config-menu .toggle-btn.active {
-  background-color: green;
+  background-color: var(--state-complete-bg);
+  color: white;
+}
+
+.config-menu .btn-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: scale-down;
 }
 
 .github-sync-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
+  gap: 7px;
+  padding: 9px 10px 10px;
   border-top: 2px solid black;
-  background: #f4ead4;
-  color: black;
-  max-width: 340px;
+  background: #d9d9df;
+  color: #050505;
+  max-width: 360px;
 }
 
 .github-sync-token,
@@ -41,16 +68,24 @@
 .github-sync-token {
   flex-direction: column;
   align-items: stretch;
+  gap: 4px;
+  font-weight: 600;
 }
 
 .github-sync-token input {
   box-sizing: border-box;
   width: 100%;
-  min-height: 32px;
+  min-height: 30px;
+  border: 1px solid #777783;
+  background: #f7f7fb;
+  color: #050505;
+  padding: 4px 6px;
+  font: inherit;
 }
 
 .github-sync-remember {
-  font-size: 0.9rem;
+  justify-content: flex-start;
+  font-size: 0.85rem;
 }
 
 .github-sync-actions {
@@ -58,8 +93,16 @@
 }
 
 .github-sync-actions button {
-  min-height: 34px;
+  min-height: 30px;
   width: 100%;
+  border: 1px solid #777783;
+  background: #e6e6ec;
+  color: #050505;
+  font: inherit;
+}
+
+.github-sync-actions button:hover:not(:disabled) {
+  background: #f2f2f7;
 }
 
 .github-sync-actions button:disabled {
@@ -68,8 +111,11 @@
 }
 
 .github-sync-status {
-  margin: 0;
-  font-size: 0.85rem;
+  margin: 2px 0 0;
+  min-height: 2.2em;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-align: center;
   overflow-wrap: anywhere;
 }
 

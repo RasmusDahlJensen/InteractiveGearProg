@@ -10,3 +10,8 @@
 .acknowledgements {
   display: none;
 }
+
+.faq-section,
+footer {
+  display: none;
+}
