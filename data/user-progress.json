@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "updatedAt": null,
+  "milestonesComplete": [],
+  "milestonesHidden": [],
+  "showBareBones": false,
+  "showRetirement": false,
+  "hide": {
+    "item": false,
+    "prayer": false,
+    "construction": false,
+    "slayer": false,
+    "spell": false,
+    "skill": false
+  }
+}

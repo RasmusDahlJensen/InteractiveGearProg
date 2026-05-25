@@ -6,6 +6,11 @@ import FAQSection from '@/components/static/FAQSection.jsx';
 import Footer from '@/components/static/Footer.jsx';
 import '@/styles/ChartPage.css';
 import { apiUrl } from '@/utils/apiConfig';
+import {
+    buildProgressPayload,
+    loadGitHubProgress,
+    saveGitHubProgress,
+} from '@/utils/githubProgress';
 import migrateLegacySharedNodeStates from '@/utils/migrateState';
 import removeStarredItems from '@/utils/removeStarredItems.js';
 import updateSequenceLanceRule from '@/utils/sequenceRules.js';
@@ -20,6 +25,7 @@ import Annotations from "../components/Annotations";
 
 const PROGRESS_SNAPSHOT_DATE_KEY = "progressSnapshotSubmittedDate";
 const HIDDEN_MILESTONES_SNAPSHOT_DATE_KEY = "hiddenMilestonesSnapshotSubmittedDate";
+const GITHUB_TOKEN_STORAGE_KEY = "githubProgressToken";
 
 function localDateKey(date = new Date()) {
     const year = date.getFullYear();
@@ -97,6 +103,13 @@ export default function ChartPage(){
     const [showRetirement, setShowRetirement] = useLocalStorageState('showRetirement', false);
     const [showBareBones, setShowBareBones] = useLocalStorageState('showBareBones', false);
     const [showOptions, setShowOptions] = useState(false);
+    const [githubToken, setGithubToken] = useLocalStorageState(GITHUB_TOKEN_STORAGE_KEY, "");
+    const [rememberGithubToken, setRememberGithubToken] = useLocalStorageState("rememberGithubToken", false);
+    const [transientGithubToken, setTransientGithubToken] = useState("");
+    const [githubSyncStatus, setGithubSyncStatus] = useState({
+        type: "idle",
+        message: "GitHub sync is ready.",
+    });
     const [progressSnapshotReady, setProgressSnapshotReady] = useState(false);
     const progressSnapshotAttempted = React.useRef(false);
 
@@ -113,6 +126,70 @@ export default function ChartPage(){
 
     const [annotations, setAnnotations] = useState([]);
     const [annotatedMilestone, setAnnotatedMilestone] = useState();
+    const activeGithubToken = rememberGithubToken ? githubToken : transientGithubToken;
+
+    function handleGithubTokenChange(value) {
+        if (rememberGithubToken) setGithubToken(value);
+        else setTransientGithubToken(value);
+    }
+
+    function handleRememberGithubTokenChange(value) {
+        setRememberGithubToken(value);
+        if (value) {
+            setGithubToken(transientGithubToken);
+            setTransientGithubToken("");
+        } else {
+            setTransientGithubToken(githubToken);
+            setGithubToken("");
+        }
+    }
+
+    function currentProgressPayload() {
+        return buildProgressPayload({
+            milestonesComplete,
+            milestonesHidden,
+            showBareBones,
+            showRetirement,
+            hide,
+        });
+    }
+
+    async function handleLoadGitHubProgress() {
+        setGithubSyncStatus({ type: "pending", message: "Loading progress from GitHub..." });
+        try {
+            const progress = await loadGitHubProgress(activeGithubToken.trim());
+            setMilestonesComplete(new Set(progress.milestonesComplete));
+            setMilestonesHidden(new Set(progress.milestonesHidden));
+            setShowBareBones(progress.showBareBones);
+            setShowRetirement(progress.showRetirement);
+            setHide(progress.hide);
+            setGithubSyncStatus({
+                type: "success",
+                message: `Loaded GitHub progress${progress.updatedAt ? ` from ${new Date(progress.updatedAt).toLocaleString()}` : ""}.`,
+            });
+        } catch (err) {
+            setGithubSyncStatus({
+                type: "error",
+                message: err instanceof Error ? err.message : "GitHub load failed.",
+            });
+        }
+    }
+
+    async function handleSaveGitHubProgress() {
+        setGithubSyncStatus({ type: "pending", message: "Saving progress to GitHub..." });
+        try {
+            const progress = await saveGitHubProgress(activeGithubToken.trim(), currentProgressPayload());
+            setGithubSyncStatus({
+                type: "success",
+                message: `Saved GitHub progress at ${new Date(progress.updatedAt).toLocaleString()}.`,
+            });
+        } catch (err) {
+            setGithubSyncStatus({
+                type: "error",
+                message: err instanceof Error ? err.message : "GitHub save failed.",
+            });
+        }
+    }
 
     async function handleShowAnnotations(milestone){
         setAnnotations(await getMilestoneAnnotations(milestone));
@@ -245,6 +322,15 @@ export default function ChartPage(){
                     setShowBareBones={setShowBareBones}
                     hide={hide}
                     setHide={setHide}
+                    githubSync={{
+                        token: activeGithubToken,
+                        rememberToken: rememberGithubToken,
+                        status: githubSyncStatus,
+                        onTokenChange: handleGithubTokenChange,
+                        onRememberTokenChange: handleRememberGithubTokenChange,
+                        onLoad: handleLoadGitHubProgress,
+                        onSave: handleSaveGitHubProgress,
+                    }}
                 />
             )}
             {showBareBones && (

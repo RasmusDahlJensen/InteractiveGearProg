@@ -1,6 +1,9 @@
 name: Deploy Frontend
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch: {}
 
 concurrency:
@@ -30,9 +33,6 @@ jobs:
       - name: Build project
         working-directory: frontend
         run: npm run build
-
-      - name: Add CNAME
-        run: echo 'ladlorchart.com' > frontend/dist/CNAME
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3

@@ -19,3 +19,65 @@
 .config-menu .toggle-btn.active {
   background-color: green;
 }
+
+.github-sync-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-top: 2px solid black;
+  background: #f4ead4;
+  color: black;
+  max-width: 340px;
+}
+
+.github-sync-token,
+.github-sync-remember {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.github-sync-token {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.github-sync-token input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 32px;
+}
+
+.github-sync-remember {
+  font-size: 0.9rem;
+}
+
+.github-sync-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.github-sync-actions button {
+  min-height: 34px;
+}
+
+.github-sync-actions button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.github-sync-status {
+  margin: 0;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.github-sync-status.error {
+  color: #9f1d16;
+}
+
+.github-sync-status.success {
+  color: #176c2a;
+}

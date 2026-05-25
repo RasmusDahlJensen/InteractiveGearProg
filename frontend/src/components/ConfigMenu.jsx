@@ -19,9 +19,11 @@ export default function ConfigMenu({
   showBareBones,
   setShowBareBones,
   hide,
-  setHide
+  setHide,
+  githubSync
 }) {
   const styles = {"display": "flex", "justifyContent": "center"};
+  const syncBusy = githubSync?.status?.type === "pending";
   return (
     <div style={styles}>
       <div className="config-menu"> 
@@ -60,6 +62,39 @@ export default function ConfigMenu({
           label="Hide slayer rewards"
           icon="https://oldschool.runescape.wiki/images/Slayer_icon.png"
         />
+        {githubSync && (
+          <div className="github-sync-panel">
+            <label className="github-sync-token">
+              <span>GitHub token</span>
+              <input
+                type="password"
+                value={githubSync.token}
+                onChange={event => githubSync.onTokenChange(event.target.value)}
+                placeholder="Fine-grained token"
+                autoComplete="off"
+              />
+            </label>
+            <label className="github-sync-remember">
+              <input
+                type="checkbox"
+                checked={githubSync.rememberToken}
+                onChange={event => githubSync.onRememberTokenChange(event.target.checked)}
+              />
+              <span>Remember token on this browser</span>
+            </label>
+            <div className="github-sync-actions">
+              <button type="button" onClick={githubSync.onLoad} disabled={syncBusy}>
+                Load from GitHub
+              </button>
+              <button type="button" onClick={githubSync.onSave} disabled={syncBusy}>
+                Save to GitHub
+              </button>
+            </div>
+            <p className={`github-sync-status ${githubSync.status.type}`}>
+              {githubSync.status.message}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
