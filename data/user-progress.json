@@ -1,7 +1,11 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-25T08:29:17.126Z",
-  "milestonesComplete": [],
+  "updatedAt": "2026-05-25T08:33:26.242Z",
+  "milestonesComplete": [
+    "Amulet of strength",
+    "Climbing boots",
+    "Rune pouch"
+  ],
   "milestonesHidden": [],
   "showBareBones": false,
   "showRetirement": false,
