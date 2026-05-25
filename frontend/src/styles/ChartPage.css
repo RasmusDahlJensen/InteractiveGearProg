@@ -6,3 +6,7 @@
 #options-button:active {
   background-color: #555; /* darker shade */
 }
+
+.acknowledgements {
+  display: none;
+}
