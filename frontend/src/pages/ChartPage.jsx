@@ -108,10 +108,12 @@ export default function ChartPage(){
     const [transientGithubToken, setTransientGithubToken] = useState("");
     const [githubSyncStatus, setGithubSyncStatus] = useState({
         type: "idle",
-        message: "GitHub sync is ready.",
+        message: "GitHub autosave is ready.",
     });
+    const [autoSaveRevision, setAutoSaveRevision] = useState(0);
     const [progressSnapshotReady, setProgressSnapshotReady] = useState(false);
     const progressSnapshotAttempted = React.useRef(false);
+    const autoSaveLoaded = React.useRef(false);
 
     const [milestonesHidden, setMilestonesHidden] = useLocalStorageSet('milestonesHidden', new Set(), ['nodesHiddenState']);
     const [milestonesComplete, setMilestonesComplete] = useLocalStorageSet('milestonesComplete', new Set(), ['nodesCompleteState']);
@@ -144,14 +146,23 @@ export default function ChartPage(){
         }
     }
 
-    function currentProgressPayload() {
-        return buildProgressPayload({
-            milestonesComplete,
-            milestonesHidden,
-            showBareBones,
-            showRetirement,
-            hide,
-        });
+    function queueGitHubAutoSave() {
+        setAutoSaveRevision(revision => revision + 1);
+    }
+
+    function setShowRetirementAndQueue(value) {
+        setShowRetirement(value);
+        queueGitHubAutoSave();
+    }
+
+    function setShowBareBonesAndQueue(value) {
+        setShowBareBones(value);
+        queueGitHubAutoSave();
+    }
+
+    function setHideAndQueue(value) {
+        setHide(value);
+        queueGitHubAutoSave();
     }
 
     async function handleLoadGitHubProgress() {
@@ -175,22 +186,6 @@ export default function ChartPage(){
         }
     }
 
-    async function handleSaveGitHubProgress() {
-        setGithubSyncStatus({ type: "pending", message: "Saving progress to GitHub..." });
-        try {
-            const progress = await saveGitHubProgress(activeGithubToken.trim(), currentProgressPayload());
-            setGithubSyncStatus({
-                type: "success",
-                message: `Saved GitHub progress at ${new Date(progress.updatedAt).toLocaleString()}.`,
-            });
-        } catch (err) {
-            setGithubSyncStatus({
-                type: "error",
-                message: err instanceof Error ? err.message : "GitHub save failed.",
-            });
-        }
-    }
-
     async function handleShowAnnotations(milestone){
         setAnnotations(await getMilestoneAnnotations(milestone));
         setAnnotatedMilestone(milestone);
@@ -207,9 +202,11 @@ export default function ChartPage(){
             else next.add(milestone);
             return next;
         });
+        queueGitHubAutoSave();
     }
     function handleShowClick(){
         setMilestonesHidden(new Set());
+        queueGitHubAutoSave();
     }
     function handleNodeClick(milestone) {
         setMilestonesComplete(prev => {
@@ -218,6 +215,7 @@ export default function ChartPage(){
             else next.add(milestone);
             return next;
         });
+        queueGitHubAutoSave();
     }
     // Context menu
     const [menu, setMenu] = useState({
@@ -294,6 +292,55 @@ export default function ChartPage(){
         if (!progressSnapshotReady) return;
         submitHiddenMilestonesSnapshot(milestonesHidden);
     }, [progressSnapshotReady, milestonesHidden]);
+
+    React.useEffect(() => {
+        if (!autoSaveLoaded.current) {
+            autoSaveLoaded.current = true;
+            return;
+        }
+        if (!autoSaveRevision) return;
+
+        const token = activeGithubToken.trim();
+        if (!token) {
+            setGithubSyncStatus({
+                type: "error",
+                message: "Enter a GitHub token to autosave progress.",
+            });
+            return;
+        }
+
+        setGithubSyncStatus({ type: "pending", message: "Autosaving progress to GitHub..." });
+        const timeoutId = window.setTimeout(async () => {
+            try {
+                const progress = await saveGitHubProgress(token, buildProgressPayload({
+                    milestonesComplete,
+                    milestonesHidden,
+                    showBareBones,
+                    showRetirement,
+                    hide,
+                }));
+                setGithubSyncStatus({
+                    type: "success",
+                    message: `Autosaved at ${new Date(progress.updatedAt).toLocaleString()}.`,
+                });
+            } catch (err) {
+                setGithubSyncStatus({
+                    type: "error",
+                    message: err instanceof Error ? err.message : "GitHub autosave failed.",
+                });
+            }
+        }, 1500);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [
+        activeGithubToken,
+        autoSaveRevision,
+        hide,
+        milestonesComplete,
+        milestonesHidden,
+        showBareBones,
+        showRetirement,
+    ]);
     
     const style = {"justifyContent": "space-between", "display":"flex", "alignItems": "center"}
     return (
@@ -317,11 +364,11 @@ export default function ChartPage(){
             {showOptions && (
                 <ConfigMenu
                     showRetirement={showRetirement}
-                    setShowRetirement={setShowRetirement}
+                    setShowRetirement={setShowRetirementAndQueue}
                     showBareBones={showBareBones}
-                    setShowBareBones={setShowBareBones}
+                    setShowBareBones={setShowBareBonesAndQueue}
                     hide={hide}
-                    setHide={setHide}
+                    setHide={setHideAndQueue}
                     githubSync={{
                         token: activeGithubToken,
                         rememberToken: rememberGithubToken,
@@ -329,7 +376,6 @@ export default function ChartPage(){
                         onTokenChange: handleGithubTokenChange,
                         onRememberTokenChange: handleRememberGithubTokenChange,
                         onLoad: handleLoadGitHubProgress,
-                        onSave: handleSaveGitHubProgress,
                     }}
                 />
             )}

@@ -86,9 +86,6 @@ export default function ConfigMenu({
               <button type="button" onClick={githubSync.onLoad} disabled={syncBusy}>
                 Load from GitHub
               </button>
-              <button type="button" onClick={githubSync.onSave} disabled={syncBusy}>
-                Save to GitHub
-              </button>
             </div>
             <p className={`github-sync-status ${githubSync.status.type}`}>
               {githubSync.status.message}

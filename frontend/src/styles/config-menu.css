@@ -54,13 +54,12 @@
 }
 
 .github-sync-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  display: flex;
 }
 
 .github-sync-actions button {
   min-height: 34px;
+  width: 100%;
 }
 
 .github-sync-actions button:disabled {
