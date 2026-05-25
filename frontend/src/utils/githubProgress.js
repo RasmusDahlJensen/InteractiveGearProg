@@ -21,11 +21,12 @@ function decodeBase64Utf8(value) {
 }
 
 function githubHeaders(token) {
-  return {
+  const headers = {
     Accept: "application/vnd.github+json",
-    Authorization: `Bearer ${token}`,
     "X-GitHub-Api-Version": "2022-11-28",
   };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
 }
 
 function normalizeStringArray(value) {
@@ -78,8 +79,6 @@ export function normalizeProgressPayload(payload) {
 }
 
 export async function loadGitHubProgress(token) {
-  if (!token) throw new Error("Enter a GitHub token first.");
-
   const response = await fetch(`${CONTENTS_URL}?ref=${encodeURIComponent(GITHUB_BRANCH)}`, {
     headers: githubHeaders(token),
   });

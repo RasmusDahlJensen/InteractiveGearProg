@@ -108,7 +108,7 @@ export default function ChartPage(){
     const [transientGithubToken, setTransientGithubToken] = useState("");
     const [githubSyncStatus, setGithubSyncStatus] = useState({
         type: "idle",
-        message: "GitHub autosave is ready.",
+        message: "Loading GitHub progress...",
     });
     const [autoSaveRevision, setAutoSaveRevision] = useState(0);
     const [progressSnapshotReady, setProgressSnapshotReady] = useState(false);
@@ -129,6 +129,16 @@ export default function ChartPage(){
     const [annotations, setAnnotations] = useState([]);
     const [annotatedMilestone, setAnnotatedMilestone] = useState();
     const activeGithubToken = rememberGithubToken ? githubToken : transientGithubToken;
+    const canEditGitHubProgress = Boolean(activeGithubToken.trim());
+
+    function requireGitHubToken() {
+        if (canEditGitHubProgress) return true;
+        setGithubSyncStatus({
+            type: "error",
+            message: "Enter a GitHub token before changing progress.",
+        });
+        return false;
+    }
 
     function handleGithubTokenChange(value) {
         if (rememberGithubToken) setGithubToken(value);
@@ -151,24 +161,27 @@ export default function ChartPage(){
     }
 
     function setShowRetirementAndQueue(value) {
+        if (!requireGitHubToken()) return;
         setShowRetirement(value);
         queueGitHubAutoSave();
     }
 
     function setShowBareBonesAndQueue(value) {
+        if (!requireGitHubToken()) return;
         setShowBareBones(value);
         queueGitHubAutoSave();
     }
 
     function setHideAndQueue(value) {
+        if (!requireGitHubToken()) return;
         setHide(value);
         queueGitHubAutoSave();
     }
 
-    async function handleLoadGitHubProgress() {
+    async function handleLoadGitHubProgress(token = activeGithubToken.trim(), isAutomatic = false) {
         setGithubSyncStatus({ type: "pending", message: "Loading progress from GitHub..." });
         try {
-            const progress = await loadGitHubProgress(activeGithubToken.trim());
+            const progress = await loadGitHubProgress(token);
             setMilestonesComplete(new Set(progress.milestonesComplete));
             setMilestonesHidden(new Set(progress.milestonesHidden));
             setShowBareBones(progress.showBareBones);
@@ -176,7 +189,7 @@ export default function ChartPage(){
             setHide(progress.hide);
             setGithubSyncStatus({
                 type: "success",
-                message: `Loaded GitHub progress${progress.updatedAt ? ` from ${new Date(progress.updatedAt).toLocaleString()}` : ""}.`,
+                message: `${isAutomatic ? "Automatically loaded" : "Loaded"} GitHub progress${progress.updatedAt ? ` from ${new Date(progress.updatedAt).toLocaleString()}` : ""}.`,
             });
         } catch (err) {
             setGithubSyncStatus({
@@ -196,6 +209,7 @@ export default function ChartPage(){
     }
 
     function handleHideClick(milestone){
+        if (!requireGitHubToken()) return;
         setMilestonesHidden(prev => {
             const next = new Set(prev);
             if (next.has(milestone)) next.delete(milestone);
@@ -205,10 +219,12 @@ export default function ChartPage(){
         queueGitHubAutoSave();
     }
     function handleShowClick(){
+        if (!requireGitHubToken()) return;
         setMilestonesHidden(new Set());
         queueGitHubAutoSave();
     }
     function handleNodeClick(milestone) {
+        if (!requireGitHubToken()) return;
         setMilestonesComplete(prev => {
             const next = new Set(prev);
             if (next.has(milestone)) next.delete(milestone);
@@ -294,6 +310,44 @@ export default function ChartPage(){
     }, [progressSnapshotReady, milestonesHidden]);
 
     React.useEffect(() => {
+        let cancelled = false;
+
+        async function loadInitialGitHubProgress() {
+            setGithubSyncStatus({ type: "pending", message: "Loading progress from GitHub..." });
+            try {
+                const progress = await loadGitHubProgress("");
+                if (cancelled) return;
+                setMilestonesComplete(new Set(progress.milestonesComplete));
+                setMilestonesHidden(new Set(progress.milestonesHidden));
+                setShowBareBones(progress.showBareBones);
+                setShowRetirement(progress.showRetirement);
+                setHide(progress.hide);
+                setGithubSyncStatus({
+                    type: "success",
+                    message: `Automatically loaded GitHub progress${progress.updatedAt ? ` from ${new Date(progress.updatedAt).toLocaleString()}` : ""}.`,
+                });
+            } catch (err) {
+                if (cancelled) return;
+                setGithubSyncStatus({
+                    type: "error",
+                    message: err instanceof Error ? err.message : "GitHub load failed.",
+                });
+            }
+        }
+
+        loadInitialGitHubProgress();
+        return () => {
+            cancelled = true;
+        };
+    }, [
+        setHide,
+        setMilestonesComplete,
+        setMilestonesHidden,
+        setShowBareBones,
+        setShowRetirement,
+    ]);
+
+    React.useEffect(() => {
         if (!autoSaveLoaded.current) {
             autoSaveLoaded.current = true;
             return;
@@ -371,6 +425,7 @@ export default function ChartPage(){
                     setHide={setHideAndQueue}
                     githubSync={{
                         token: activeGithubToken,
+                        canEdit: canEditGitHubProgress,
                         rememberToken: rememberGithubToken,
                         status: githubSyncStatus,
                         onTokenChange: handleGithubTokenChange,

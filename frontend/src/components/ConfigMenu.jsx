@@ -1,11 +1,12 @@
 import '@/styles/config-menu.css';
 
-function ToggleButton({ id, value, label, icon, onToggle }) {
+function ToggleButton({ id, value, label, icon, onToggle, disabled = false }) {
   return (
     <button
       id={id}
       className={`toggle-btn ${value ? 'active' : ''}`}
       onClick={() => onToggle(!value)}
+      disabled={disabled}
     >
       {label && <span className="btn-text">{label}</span>}
       {icon && <img className="btn-icon" src={icon} alt="" aria-hidden="true" />}
@@ -24,6 +25,7 @@ export default function ConfigMenu({
 }) {
   const styles = {"display": "flex", "justifyContent": "center"};
   const syncBusy = githubSync?.status?.type === "pending";
+  const canEdit = Boolean(githubSync?.canEdit);
   return (
     <div style={styles}>
       <div className="config-menu"> 
@@ -31,6 +33,7 @@ export default function ConfigMenu({
           id="retirement-toggle"
           value={showRetirement}
           onToggle={setShowRetirement}
+          disabled={!canEdit}
           label="Enable retirement home items"
           icon="https://oldschool.runescape.wiki/images/Collection_log.png"
         />
@@ -38,6 +41,7 @@ export default function ConfigMenu({
           id="bare-bones-toggle"
           value={showBareBones}
           onToggle={setShowBareBones}
+          disabled={!canEdit}
           label="Enable bare bones mode"
           icon="https://oldschool.runescape.wiki/images/Bones.png"
         />
@@ -45,6 +49,7 @@ export default function ConfigMenu({
           id="hide-skill"
           value={hide.skill}
           onToggle={v => setHide(prev => ({ ...prev, skill: v }))}
+          disabled={!canEdit}
           label="Hide levels"
           icon="https://oldschool.runescape.wiki/images/Stats_icon.png"
         />
@@ -52,6 +57,7 @@ export default function ConfigMenu({
           id="hide-construction"
           value={hide.construction}
           onToggle={v => setHide(prev => ({ ...prev, construction: v }))}
+          disabled={!canEdit}
           label="Hide Construction milestones"
           icon="https://oldschool.runescape.wiki/images/Construction_icon.png"
         />
@@ -59,6 +65,7 @@ export default function ConfigMenu({
           id="hide-slayer"
           value={hide.slayer}
           onToggle={v => setHide(prev => ({ ...prev, slayer: v }))}
+          disabled={!canEdit}
           label="Hide slayer rewards"
           icon="https://oldschool.runescape.wiki/images/Slayer_icon.png"
         />
