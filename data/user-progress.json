@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-12T19:34:46.249Z",
+  "updatedAt": "2026-06-14T08:53:01.329Z",
   "milestonesComplete": [
     "69 slayer",
     "70 ranged",
@@ -96,7 +96,7 @@
   ],
   "milestonesHidden": [],
   "showBareBones": false,
-  "showRetirement": true,
+  "showRetirement": false,
   "hide": {
     "item": false,
     "prayer": false,
